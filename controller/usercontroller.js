@@ -1,44 +1,13 @@
+/* eslint-disable import/order */
 const { body, validationResult } = require('express-validator')
 const { sanitizeBody } = require('express-validator/filter')
 
 const User = require('../model/usermodel')
+const common = require('../common/common')
 
-exports.checkUser = [
-  body('email').isLength({ min: 1 }).trim().withMessage('email require')
-    .isEmail()
-    .withMessage('email is not valid'),
-  body('mobilenumber').isLength({ min: 1 }).trim().withMessage('mobilenumber require')
-    .isNumeric()
-    .withMessage('mobilenumber contain numbers only'),
-  sanitizeBody('email').trim(),
-  sanitizeBody('mobilenumber').trim(),
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(422).json({
-        status: false,
-        errors,
-      })
-    } else {
-      const query = [{ email: req.body.email }, { mobilenumber: req.body.mobilenumber }]
-      User.findOne({ $or: query }, (err, user) => {
-        if (err) {
-          res.status(422).json({
-            status: false,
-            errors,
-          })
-        } else if (user) {
-          res.status(422).json({
-            status: false,
-            errors,
-            message: 'email or mobile number already exsist.',
-          })
-        } else next();
-      });
-    }
-  },
-];
+// const authy = require('authy')('RP0WD70gkxi9ykVi4oheuPYT77Jg6MQd');
 
+// const text = require('textbelt');
 
 exports.createUser = [
   body('firstName').isLength({ min: 1 }).trim().withMessage('firstName require')
@@ -61,13 +30,10 @@ exports.createUser = [
   sanitizeBody('mobilenumber').trim(),
   sanitizeBody('password').trim(),
 
-  (req, res) => {
+  async (req, res) => {
     const error = validationResult(req);
     if (!error.isEmpty()) {
-      res.status(422).json({
-        status: false,
-        errors: error,
-      })
+      common.validationError(res, error, 422)
     } else {
       const user = new User({
         firstName: req.body.firstName,
@@ -76,19 +42,12 @@ exports.createUser = [
         mobilenumber: req.body.mobilenumber,
         password: req.body.password,
       });
-      user.save((err, data) => {
-        if (err) {
-          res.status(422).json({
-            status: false,
-            mongoerror: error,
-          })
-        } else {
-          res.status(200).json({
-            status: true,
-            data,
-          })
-        }
-      })
+      try {
+        const data = await user.save()
+        common.sendSuccessResponse(res, data)
+      } catch (err) {
+        common.sendFailureResponse(res, err, 422)
+      }
     }
   },
 ];
