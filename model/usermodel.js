@@ -8,6 +8,7 @@ const UserSchema = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   verified: { type: Boolean, default: false },
+  profileImage: { type: String, required: false },
   mobilenumber: { type: String, required: true, unique: true },
   authyId: String,
   address: [{

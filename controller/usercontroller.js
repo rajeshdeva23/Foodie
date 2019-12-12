@@ -51,3 +51,13 @@ exports.createUser = [
     }
   },
 ];
+exports.updateUser = [
+  async (req, res) => {
+    const id = req.body.userid;
+    const user = await User.findOne({ _id: id })
+    User.findOneAndUpdate({ _id: id }, { $set: { firstName: 'rajesh' } }, {new: true}, (err, document) => {
+      console.log('updateee', err)
+      console.log('updateee ', document)
+    })
+  },
+];
